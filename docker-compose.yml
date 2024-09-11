@@ -2,9 +2,9 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_DB: ai_service
-      POSTGRES_USER: ai_service
-      POSTGRES_PASSWORD: ai_service
+      POSTGRES_DB: pyconapac
+      POSTGRES_USER: pyconapac
+      POSTGRES_PASSWORD: pyconapac
     ports:
       - "5432:5432"
     restart: always
