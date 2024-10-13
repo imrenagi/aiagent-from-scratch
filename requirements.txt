@@ -1,0 +1,21 @@
+google-cloud-aiplatform==1.69.0
+google-cloud-aiplatform[langchain]
+google-cloud-aiplatform[reasoningengine]
+langchain==0.2.16
+langchain_core==0.2.39
+langchain_community==0.2.17
+langchain-google-vertexai==1.0.10
+cloudpickle==3.1.0
+pydantic==2.9.2
+langchain-google-community==1.0.8
+google-cloud-discoveryengine==0.12.3
+nest-asyncio
+asyncio==3.4.3
+asyncpg==0.29.0
+cloud-sql-python-connector[asyncpg]==1.12.1
+langchain-google-cloud-sql-pg==0.11.0
+numpy
+pandas
+pgvector==0.3.5
+# psycopg2
+psycopg2-binary==2.9.9

@@ -62,6 +62,3 @@ class CourseContentRetriever(BaseRetriever):
                 }
             ) for r in results if r[2] is not None
         ]
-
-
-
