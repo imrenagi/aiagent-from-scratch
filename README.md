@@ -26,19 +26,3 @@ Additionally, if participants have a Google Cloud Platform (GCP) account, they w
 
 By the end of this workshop, participants will have hands-on experience and a clear understanding of how to build and deploy a robust AI agent capable of interacting with users and performing complex tasks, all using open-source software and cloud technologies.
 
-## Installation
-
-1. Docker
-2. Docker Compose
-
-## Running API Locally
-
-
-## Setting Up Google Credentials
-
-
-https://python.langchain.com/docs/how_to/custom_retriever/
-
-https://cloud.google.com/blog/products/databases/using-pgvector-llms-and-langchain-with-google-cloud-databases
-
-https://colab.research.google.com/github/GoogleCloudPlatform/python-docs-samples/blob/main/cloud-sql/postgres/pgvector/notebooks/pgvector_gen_ai_demo.ipynb
