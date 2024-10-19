@@ -25,4 +25,3 @@ Participants are encouraged to use any Large Language Models (LLMs) they are fam
 Additionally, if participants have a Google Cloud Platform (GCP) account, they will be able to follow along with the deployment process, as we will be deploying the AI agent to the cloud using Google Cloud's Reasoning Engine.
 
 By the end of this workshop, participants will have hands-on experience and a clear understanding of how to build and deploy a robust AI agent capable of interacting with users and performing complex tasks, all using open-source software and cloud technologies.
-
