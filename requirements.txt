@@ -1,12 +1,13 @@
+
 google-cloud-aiplatform
 google-cloud-aiplatform[langchain]
 google-cloud-aiplatform[reasoningengine]
 langchain
 langchain_core
 langchain_community
-langchain-google-vertexai
+langchain-google-vertexai==2.0.0
 cloudpickle
-pydantic
+pydantic==2.9.2
 langchain-google-community
 google-cloud-discoveryengine
 nest-asyncio
@@ -18,3 +19,10 @@ numpy
 pandas
 pgvector
 psycopg2-binary
+langchain-openai
+langgraph
+traceloop-sdk
+opentelemetry-instrumentation-google-generativeai
+opentelemetry-instrumentation-langchain
+opentelemetry-instrumentation-vertexai
+python-dotenv

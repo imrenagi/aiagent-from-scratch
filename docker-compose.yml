@@ -11,5 +11,78 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data/
 
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./scripts/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command: 
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=5m'
+      - '--storage.tsdb.retention.size=10GB'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3000:3000
+    volumes:
+      - ./scripts/grafana/provisioning:/etc/grafana/provisioning
+      - ./scripts/grafana/dashboards:/etc/grafana/demo-dashboards
+      - grafana_data:/var/lib/grafana
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: 9411
+      METRICS_STORAGE_TYPE: prometheus
+      LOG_LEVEL: debug
+    expose:
+      - "16686"
+    ports:
+      - 5775:5775/udp
+      - 6831:6831/udp
+      - 6832:6832/udp
+      - 5778:5778
+      - 16686:16686
+      - 14268:14268
+      - 14250:14250
+      - 14269:14269
+      - 9411:9411
+    command: 
+      - "--memory.max-traces"
+      - "1000"
+      - "--prometheus.server-url"
+      - "http://prometheus:9090"
+      - "--collector.otlp.grpc.host-port"
+      - ":4317"
+      - "--collector.otlp.http.host-port"
+      - ":4318"
+      # - "--prometheus.query.support-spanmetrics-connector"
+      # - "true"
+    restart: always
+
+  otel_collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    expose:
+      - "4317"
+      - "4318"
+    ports:
+      - "1888:1888"   # pprof extension
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "55679:55679" # zpages extension
+    volumes:
+      - "./scripts/opentelemetry:/observability"
+    command: ["--config=/observability/config.yaml"]
+    restart: always
+    depends_on: [jaeger]
+
 volumes:
   postgres:
+  prometheus_data:
+  grafana_data:
