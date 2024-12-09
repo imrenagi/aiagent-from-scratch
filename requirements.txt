@@ -26,3 +26,5 @@ opentelemetry-instrumentation-google-generativeai
 opentelemetry-instrumentation-langchain
 opentelemetry-instrumentation-vertexai
 python-dotenv
+bs4
+faiss-cpu
