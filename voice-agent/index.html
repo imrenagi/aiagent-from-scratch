@@ -132,7 +132,7 @@
             if (ws) {
                 return false;
             }
-            ws = new WebSocket('ws://localhost:8000/api/v1/chats')
+            ws = new WebSocket('{{.}}')
             ws.onopen = function() {
                 console.log('WebSocket connected');
             };
@@ -149,8 +149,10 @@
                 console.log(data.serverContent);
                 if (data.serverContent.interrupted) {
                     console.log('Interrupted');
+                    pauseAudioPlayback();
                 }
                 if (data.serverContent.turnComplete) {
+                    console.log('Turn complete');
                     if (audioChunksSent.length > 0) {
                         printChatAudio(encodeAudio(audioChunksSent, sampleRate, 16, 1), 'Me');                   
                         audioChunksSent = [];

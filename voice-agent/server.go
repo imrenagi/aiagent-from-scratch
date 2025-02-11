@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"net/http"
+	"voice-agent/courses"
+	"voice-agent/interviews"
 
 	_ "embed"
 
@@ -28,25 +30,7 @@ const (
 //go:embed index.html
 var homeTemplate string
 
-func (s Server) Test() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		q := r.URL.Query().Get("q")
-		if q == "" {
-			http.Error(w, "Missing query parameter 'q'", http.StatusBadRequest)
-			return
-		}
-
-		_, err := s.SearchCourseContent(r.Context(), q)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-
-		w.Write([]byte("hello"))
-	}
-}
-
-func (s Server) ChatHandler() http.HandlerFunc {
+func (s Server) voiceChaHandler(model string, cfg *genai.LiveConnectConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -56,31 +40,7 @@ func (s Server) ChatHandler() http.HandlerFunc {
 		}
 		defer c.Close()
 
-		session, err := s.GenAIClient.Live.Connect(modelName,
-			&genai.LiveConnectConfig{
-				GenerationConfig: &genai.GenerationConfig{
-					AudioTimestamp: true,
-				},
-				ResponseModalities: []genai.Modality{
-					genai.ModalityAudio,
-					genai.ModalityText,
-				},
-				SpeechConfig: &genai.SpeechConfig{
-					VoiceConfig: &genai.VoiceConfig{
-						PrebuiltVoiceConfig: &genai.PrebuiltVoiceConfig{
-							VoiceName: "Kore",
-						},
-					},
-				},
-				SystemInstruction: &genai.Content{
-					Parts: []*genai.Part{
-						{
-							Text: systemPrompt,
-						},
-					},
-				},
-				Tools: courseAgentTools,
-			})
+		session, err := s.GenAIClient.Live.Connect(model, cfg)
 		if err != nil {
 			log.Error().Err(err).Msg("unable to start live session")
 			writeError(w, http.StatusInternalServerError, err)
@@ -201,7 +161,70 @@ func (s Server) ChatHandler() http.HandlerFunc {
 	}
 }
 
-func (s Server) Home() http.HandlerFunc {
+func (s Server) CourseVoiceChaHandler() http.HandlerFunc {
+	config := &genai.LiveConnectConfig{
+		GenerationConfig: &genai.GenerationConfig{
+			AudioTimestamp: true,
+		},
+		ResponseModalities: []genai.Modality{
+			genai.ModalityAudio,
+			genai.ModalityText,
+		},
+		SpeechConfig: &genai.SpeechConfig{
+			VoiceConfig: &genai.VoiceConfig{
+				PrebuiltVoiceConfig: &genai.PrebuiltVoiceConfig{
+					VoiceName: "Kore",
+				},
+			},
+		},
+		SystemInstruction: &genai.Content{
+			Parts: []*genai.Part{
+				{
+					Text: courses.SystemPrompt,
+				},
+			},
+		},
+		Tools: courses.Tools,
+	}
+	return s.voiceChaHandler(modelName, config)
+}
+
+func (s Server) InterviewerVoiceChaHandler() http.HandlerFunc {
+	config := &genai.LiveConnectConfig{
+		GenerationConfig: &genai.GenerationConfig{
+			AudioTimestamp: true,
+		},
+		ResponseModalities: []genai.Modality{
+			genai.ModalityAudio,
+			genai.ModalityText,
+		},
+		SpeechConfig: &genai.SpeechConfig{
+			VoiceConfig: &genai.VoiceConfig{
+				PrebuiltVoiceConfig: &genai.PrebuiltVoiceConfig{
+					VoiceName: "Kore",
+				},
+			},
+		},
+		SystemInstruction: &genai.Content{
+			Parts: []*genai.Part{
+				{
+					Text: interviews.SystemPrompt,
+				},
+			},
+		},
+	}
+	return s.voiceChaHandler(modelName, config)
+}
+
+func (s Server) CourseAgent() http.HandlerFunc {
+	return s.voiceChatPage("/api/v1/courses/voice_sessions:start")
+}
+
+func (s Server) InterviewAgent() http.HandlerFunc {
+	return s.voiceChatPage("/api/v1/interviewers/voice_sessions:start")
+}
+
+func (s Server) voiceChatPage(path string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.New("home").Parse(homeTemplate)
 		if err != nil {
@@ -209,7 +232,7 @@ func (s Server) Home() http.HandlerFunc {
 			return
 		}
 
-		err = tmpl.Execute(w, "ws://"+r.Host+"/api/v1/chats")
+		err = tmpl.Execute(w, "ws://"+r.Host+path)
 		if err != nil {
 			http.Error(w, "Error executing template", http.StatusInternalServerError)
 			return
@@ -226,13 +249,16 @@ type Server struct {
 
 func (s *Server) Start(ctx context.Context) {
 	mux := mux.NewRouter()
-	mux.Handle("/", s.Home())
-	mux.Handle("/test", s.Test())
+	mux.Handle("/courses", s.CourseAgent())
+	mux.Handle("/interviews", s.InterviewAgent())
 
 	api := mux.PathPrefix("/api").Subrouter()
 
-	v1Router := api.PathPrefix("/v1").Subrouter()
-	v1Router.Handle("/chats", s.ChatHandler())
+	coursesV1Router := api.PathPrefix("/v1/courses").Subrouter()
+	coursesV1Router.Handle("/voice_sessions:start", s.CourseVoiceChaHandler())
+
+	interviewersV1Router := api.PathPrefix("/v1/interviewers").Subrouter()
+	interviewersV1Router.Handle("/voice_sessions:start", s.InterviewerVoiceChaHandler())
 
 	server := &http.Server{
 		Addr:              ":8000",

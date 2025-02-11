@@ -5,94 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"voice-agent/courses"
+
 	"github.com/rs/zerolog/log"
 
 	gogenai "github.com/google/generative-ai-go/genai"
 	"google.golang.org/genai"
 )
-
-var systemPrompt = `You are a bot assistant that sells online course about software security. You only use information provided from datastore or tools. You can provide the information that is relevant to the user's question or the summary of the content. If they ask about the content, you can give them more detail about the content. If the user seems interested, you may suggest the user to enroll in the course.`
-
-var courseAgentTools = []*genai.Tool{
-	{
-		FunctionDeclarations: []*genai.FunctionDeclaration{
-			{
-				Name:        "search_course_content",
-				Description: "Explain about software security course materials.",
-				Parameters: &genai.Schema{
-					Type: genai.TypeObject,
-					Properties: map[string]*genai.Schema{
-						"query": {
-							Type:        genai.TypeString,
-							Description: "search query to search course content.",
-						},
-					},
-					Required: []string{"query"},
-				},
-			},
-			{
-				Name:        "list_courses",
-				Description: "List all available courses sold on the platform.",
-			},
-			{
-				Name:        "get_course",
-				Description: "Get course details by course name. course name is the unique identifier of the course. it typically contains the course title with dashes. This function can be used to get course details such as course price, etc.",
-				Parameters: &genai.Schema{
-					Type: genai.TypeObject,
-					Properties: map[string]*genai.Schema{
-						"course": {
-							Type:        genai.TypeString,
-							Description: "name of the course. this is the unique identifier of the course. it typically contains the course title with dashes, all in lowercase.",
-						},
-					},
-					Required: []string{"course"},
-				},
-			},
-			{
-				Name:        "create_order",
-				Description: "Create order for a course. This function can be used to create an order for a course. When this function returns successfully, it will return payment url to user to make payment.",
-				Parameters: &genai.Schema{
-					Type: genai.TypeObject,
-					Properties: map[string]*genai.Schema{
-						"course": {
-							Type:        genai.TypeString,
-							Description: "name of the course. this is the unique identifier of the course. it typically contains the course title with dashes, all in lowercase.",
-						},
-						"user_name": {
-							Type:        genai.TypeString,
-							Description: "name of the user who is purchasing the course .",
-						},
-						"user_email": {
-							Type:        genai.TypeString,
-							Description: "email of the user who is purchasing the course .",
-						},
-					},
-					Required: []string{"course", "user_name", "user_email"},
-				},
-			},
-			{
-				Name:        "get_order",
-				Description: "Get order by using order number. This function can be used to get order details such as payment status to check whether the order has been paid or not. If user already paid the course, say thanks",
-				Parameters: &genai.Schema{
-					Type: genai.TypeObject,
-					Properties: map[string]*genai.Schema{
-						"order_number": {
-							Type:        genai.TypeString,
-							Description: "order number identifier. this is a unique identifier in uuid format.",
-						},
-					},
-					Required: []string{"order_number"},
-				},
-			},
-		},
-	},
-}
-
-type ApiTool struct {
-}
-
-type VectorTool struct {
-}
 
 func (s Server) Dispatch(ctx context.Context, fc *genai.FunctionCall) (*genai.FunctionResponse, error) {
 	switch fc.Name {
@@ -116,7 +35,7 @@ func (s Server) GetOrder(ctx context.Context, fc *genai.FunctionCall) (*genai.Fu
 	if !ok {
 		return nil, fmt.Errorf("missing order number")
 	}
-	o, err := GetOrder(ctx, orderNumber)
+	o, err := courses.GetOrder(ctx, orderNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +68,7 @@ func (s Server) CreateOrder(ctx context.Context, fc *genai.FunctionCall) (*genai
 	if !ok {
 		return nil, fmt.Errorf("missing user email")
 	}
-	o, err := CreateOrder(ctx, course, userName, userEmail)
+	o, err := courses.CreateOrder(ctx, course, userName, userEmail)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +99,7 @@ func (s Server) GetCourse(ctx context.Context, fc *genai.FunctionCall) (*genai.F
 		return nil, fmt.Errorf("missing course")
 	}
 
-	c, err := GetCourse(ctx, course)
+	c, err := courses.GetCourse(ctx, course)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +120,7 @@ func (s Server) GetCourse(ctx context.Context, fc *genai.FunctionCall) (*genai.F
 }
 
 func (s Server) ListCourses(ctx context.Context) (*genai.FunctionResponse, error) {
-	courses, err := ListCourse(ctx)
+	courses, err := courses.ListCourse(ctx)
 	if err != nil {
 		return nil, err
 	}

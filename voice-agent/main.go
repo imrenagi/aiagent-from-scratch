@@ -40,10 +40,6 @@ func main() {
 		log.Fatal().Err(err).Msgf("create genai client error")
 	}
 
-	log.Debug().
-		Str("token", os.Getenv("GEMINI_API_KEY")).
-		Msg("checking token")
-
 	genAiClient, err := gogenai.NewClient(ctx,
 		option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
 	if err != nil {
